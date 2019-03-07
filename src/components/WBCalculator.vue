@@ -1,6 +1,6 @@
 <template>
   <div class="calculator">
-    <h1>{{ msg }}</h1>
+    <h1>{{msg}}</h1>
     <form onsubmit="return false;">
       <fieldset>
         <article>
@@ -31,7 +31,7 @@
         </article>
       </fieldset>
 
-      <button type="submit" v-on:click="calculate">Calculate</button>
+      <button class="calculate" type="submit" v-on:click="calculate">Calculate</button>
     </form>
     <h2>Computed Values</h2>
     <table>
@@ -70,7 +70,7 @@
 
 <script>
 export default{
-  name: 'HelloWorld',
+  name: 'WBCalculator',
   data () {
     return {
       msg: 'Wecome to TFSA/RRSP calculator',
