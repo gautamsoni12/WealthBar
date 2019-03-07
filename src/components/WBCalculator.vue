@@ -43,26 +43,26 @@
       <tr>
         <!--<td>Tax Refund</td>-->
         <td>Amount of after-tax deposited in the TFSA vs RRSP</td>
-        <td>${{  RRSPTaxRefund.toFixed(2)}}</td>
-        <td>${{  TFSATaxRefund.toFixed(2) }}</td>
+        <td>${{  RRSPDepositAfterTax.toFixed(2) }}</td>
+        <td>${{  TFSADepositAfterTax.toFixed(2) }}</td>
       </tr>
       <tr>
         <!--<td>Tax due on withdrawl</td>-->
         <td>The future value (in today’s dollars) of the savings at the end of the investment period</td>
-        <td>${{ RRSPWithdrawalTaxValue.toFixed(2) }}</td>
-        <td>${{ TFSAWithdrawalTaxValue.toFixed(2) }}</td>
+        <td>${{ RRSPFutureValueAtEnd.toFixed(2) }}</td>
+        <td>${{ TFSAFutureValueAtEnd.toFixed(2) }}</td>
       </tr>
       <tr>
         <!--<td>Future value after tax on withdrawl</td>-->
         <td>The tax paid upon withdrawal</td>
-        <td>${{ RRSPFutureValueAfterTax.toFixed(2) }}</td>
-        <td>${{ TFSAFutureValueAfterTax.toFixed(2) }}</td>
+        <td>${{ RRSPWithdrawalTaxValue.toFixed(2) }}</td>
+        <td>${{ TFSAWithdrawalTaxValue.toFixed(2) }}</td>
       </tr>
       <tr>
         <!--<td>Future value after tax on withdrawal when tax refund is also invested</td>-->
         <td>The after-tax future value of the investment at the end of the investment period</td>
-        <td>${{ RRSPWithTaxRefundFutureValueAfterTax.toFixed(2)}}</td>
-        <td>${{ TFSAWithTaxRefundFutureValueAfterTax.toFixed(2) }}</td>
+        <td>${{ RRSPAfterTaxFV.toFixed(2)}}</td>
+        <td>${{ TFSAAfterTaxFV.toFixed(2) }}</td>
       </tr>
     </table>
   </div>
@@ -83,14 +83,20 @@ export default{
       displayResults: false,
       nominalFutureValue: 0,
       inflationFutureValue: 0,
-      RRSPTaxRefund: 0,
+      // RRSPTaxRefund: 0,
       RRSPWithdrawalTaxValue: 0,
-      RRSPFutureValueAfterTax: 0,
-      RRSPWithTaxRefundFutureValueAfterTax: 0,
-      TFSATaxRefund: 0,
+      // RRSPFutureValueAfterTax: 0,
+      // RRSPWithTaxRefundFutureValueAfterTax: 0,
+      // TFSATaxRefund: 0,
       TFSAWithdrawalTaxValue: 0,
-      TFSAFutureValueAfterTax: 0,
-      TFSAWithTaxRefundFutureValueAfterTax: 0
+      // TFSAFutureValueAfterTax: 0,
+      // TFSAWithTaxRefundFutureValueAfterTax: 0,
+      RRSPDepositAfterTax: 0,
+      TFSADepositAfterTax: 0,
+      RRSPFutureValueAtEnd: 0,
+      TFSAFutureValueAtEnd: 0,
+      RRSPAfterTaxFV: 0,
+      TFSAAfterTaxFV: 0
     }
   },
   methods: {
@@ -104,47 +110,64 @@ export default{
         return
       }
 
+      // The amount deposited in each account
+      this.RRSPDepositAfterTax = this.depositAmount
+      this.TFSADepositAfterTax = this.depositAmount - this.computeTax(this.depositAmount, this.currentTaxRate)
+
+      // Future Value of savings at the end of investment period. (adjusted for inflation)
+      let realRateOfReturn = this.computeRealRateOfReturn(this.roi, this.inflation)
+      this.RRSPFutureValueAtEnd = this.computeFutureValue(this.RRSPDepositAfterTax, realRateOfReturn, this.yearsInvested)
+      this.TFSAFutureValueAtEnd = this.computeFutureValue(this.TFSADepositAfterTax, realRateOfReturn, this.yearsInvested)
+
+      // Tax paid at withdrawl
+      this.RRSPWithdrawalTaxValue = this.computeTax(this.RRSPFutureValueAtEnd, this.retirementTaxRate)
+      this.TFSAWithdrawalTaxValue = 0
+
+      // The after-tax future value of the investment at the end of the investment period
+      this.RRSPAfterTaxFV = this.RRSPFutureValueAtEnd - this.RRSPWithdrawalTaxValue
+      this.TFSAAfterTaxFV = this.TFSAFutureValueAtEnd - this.TFSAWithdrawalTaxValue
+
       // The future value at given roi and time invested:
       this.nominalFutureValue = this.computeFutureValue(this.depositAmount, this.roi, this.yearsInvested)
 
-      // First adjust the roi for inflation.
-      // Then compute the future value at computed real rate of return.
-      let realRateOfReturn = this.computeRealRateOfReturn(this.roi, this.inflation)
-      this.inflationFutureValue = this.computeFutureValue(this.depositAmount, realRateOfReturn, this.yearsInvested)
-
-      // Calculate the dollar amount of tax refund
-      this.RRSPTaxRefund = this.computeTax(this.depositAmount, this.currentTaxRate)
-      // The tax amount at average tax rate in retirement
-      this.RRSPWithdrawalTaxValue = this.computeTax(this.nominalFutureValue, this.retirementTaxRate)
-      // The after-tax future value of the investment at the end of the investment period
-      this.RRSPFutureValueAfterTax = this.nominalFutureValue - this.RRSPWithdrawalTaxValue
-      // The future value of RRSP fund if the tax refund amound is reinvested
-      this.RRSPWithTaxRefundFutureValueAfterTax = this.computeRRSPWithTaxRefundFutureValueAfterTax()
-
-      // Calculate the dollar amount of tax refund
-      this.TFSATaxRefund = 0
-      // The tax amount at average tax rate in retirement
-      this.TFSAWithdrawalTaxValue = 0
-      // The after-tax future value of the investment at the end of the investment period
-      this.TFSAFutureValueAfterTax = this.nominalFutureValue
-      // The future value of RRSP fund if the tax refund amound is reinvested
-      this.TFSAWithTaxRefundFutureValueAfterTax = this.nominalFutureValue
-
-      this.displayResults = true
+      // // First adjust the roi for inflation.
+      // // Then compute the future value at computed real rate of return.
+      //
+      // this.inflationFutureValue = this.computeFutureValue(this.depositAmount, realRateOfReturn, this.yearsInvested)
+      //
+      // // Calculate the dollar amount of tax refund
+      // this.RRSPTaxRefund = this.computeTax(this.depositAmount, this.currentTaxRate)
+      // // The tax amount at average tax rate in retirement
+      // this.RRSPWithdrawalTaxValue = this.computeTax(this.nominalFutureValue, this.retirementTaxRate)
+      // // The after-tax future value of the investment at the end of the investment period
+      // this.RRSPFutureValueAfterTax = this.nominalFutureValue - this.RRSPWithdrawalTaxValue
+      // // The future value of RRSP fund if the tax refund amound is reinvested
+      // this.RRSPWithTaxRefundFutureValueAfterTax = this.computeRRSPWithTaxRefundFutureValueAfterTax()
+      //
+      // // Calculate the dollar amount of tax refund
+      // this.TFSATaxRefund = 0
+      // // The tax amount at average tax rate in retirement
+      // this.TFSAWithdrawalTaxValue = 0
+      // // The after-tax future value of the investment at the end of the investment period
+      // this.TFSAFutureValueAfterTax = this.nominalFutureValue
+      // // The future value of RRSP fund if the tax refund amound is reinvested
+      // this.TFSAWithTaxRefundFutureValueAfterTax = this.nominalFutureValue
+      //
+      // this.displayResults = true
     },
 
     /**
          * Calculates the future value based on the specified starting balance, interest rate and the term of the investment:
          * http://www.financeformulas.net/Compound_Interest.html
          *
-         * @param {Number} startingBalance The starting balance
+         * @param {Number} presentValue The starting balance
          * @param {Number} interestRate The average interest rate per period as a percentage (i.e. between 0 and 100)
          * @param {Number} numPeriods The number of periods (e.g. months, years) of the investment
          *
          * @returns {Number} The amount of interest in dollars
          */
-    computeFutureValue: function (startingBalance, interestRate, numPeriods) {
-      return startingBalance * Math.pow(1 + (interestRate / 100), numPeriods)
+    computeFutureValue: function (presentValue, interestRate, numPeriods) {
+      return presentValue * Math.pow(1 + (interestRate / 100), numPeriods)
     },
 
     /**
