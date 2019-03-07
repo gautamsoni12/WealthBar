@@ -17,6 +17,9 @@ npm run build
 # build for production and view the bundle analyzer report
 npm run build --report
 
+# install jest test packages
+npm install --save-dev jest @vue/test-utils
+
 # run unit tests
 npm run unit
 
