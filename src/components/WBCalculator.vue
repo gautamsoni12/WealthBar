@@ -113,7 +113,7 @@ export default{
       this.RRSPFutureValueAtEnd = this.computeFutureValue(this.RRSPDepositAfterTax, realRateOfReturn, this.yearsInvested)
       this.TFSAFutureValueAtEnd = this.computeFutureValue(this.TFSADepositAfterTax, realRateOfReturn, this.yearsInvested)
 
-      // Tax paid at withdrawl
+      // Tax paid at withdrawal
       this.RRSPWithdrawalTaxValue = this.computeTax(this.RRSPFutureValueAtEnd, this.retirementTaxRate)
       this.TFSAWithdrawalTaxValue = 0
 
